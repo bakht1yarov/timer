@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodoro Timer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a0a08;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;color:#fff}
+  .modes{display:flex;gap:8px;margin-bottom:40px}
+  .mode{padding:8px 20px;border-radius:100px;border:2px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);font-family:'Outfit',sans-serif;font-size:.85rem;cursor:pointer;transition:.3s}
+  .mode.active{background:#e05c3a;border-color:#e05c3a;color:#fff;font-weight:600}
+  .ring{position:relative;width:260px;height:260px;margin-bottom:36px}
+  svg{width:100%;height:100%;transform:rotate(-90deg)}
+  circle.bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+  circle.prog{fill:none;stroke:#e05c3a;stroke-width:8;stroke-linecap:round;stroke-dasharray:720;transition:stroke-dashoffset 1s linear}
+  .time-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:4rem;font-weight:800;letter-spacing:-2px}
+  h2{font-size:.9rem;font-weight:400;opacity:.5;text-transform:uppercase;letter-spacing:4px;margin-bottom:32px}
+  .btns{display:flex;gap:16px}
+  button.ctrl{background:#e05c3a;border:none;color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;padding:14px 36px;border-radius:100px;cursor:pointer;transition:.2s;letter-spacing:.5px}
+  button.ctrl:hover{background:#c94d2f;transform:scale(1.04)}
+  button.ctrl.sec{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+  button.ctrl.sec:hover{background:rgba(255,255,255,.18)}
+  .sessions{margin-top:28px;display:flex;gap:8px}
+  .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.2);transition:.3s}
+  .dot.done{background:#e05c3a}
+</style>
+</head>
+<body>
+<div class="modes">
+  <button class="mode active" onclick="setMode(25,'Pomodoro',this)">Pomodoro</button>
+  <button class="mode" onclick="setMode(5,'Short Break',this)">Short Break</button>
+  <button class="mode" onclick="setMode(15,'Long Break',this)">Long Break</button>
+</div>
+<div class="ring">
+  <svg viewBox="0 0 260 260"><circle class="bg" cx="130" cy="130" r="115"/><circle class="prog" id="prog" cx="130" cy="130" r="115" stroke-dashoffset="0"/></svg>
+  <div class="time-text" id="display">25:00</div>
+</div>
+<h2 id="label">Focus Time</h2>
+<div class="btns">
+  <button class="ctrl" id="startBtn" onclick="toggle()">Start</button>
+  <button class="ctrl sec" onclick="reset()">Reset</button>
+</div>
+<div class="sessions" id="sessions"></div>
+<script>
+let total=25*60,remaining=total,running=false,interval=null,sessions=0;
+const circumference=2*Math.PI*115;
+function fmt(s){return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`}
+function update(){
+  document.getElementById('display').textContent=fmt(remaining);
+  const offset=circumference*(1-remaining/total);
+  document.getElementById('prog').style.strokeDashoffset=offset;
+}
+function toggle(){
+  if(running){clearInterval(interval);running=false;document.getElementById('startBtn').textContent='Start'}
+  else{running=true;document.getElementById('startBtn').textContent='Pause';interval=setInterval(()=>{if(remaining>0){remaining--;update()}else{clearInterval(interval);running=false;sessions++;renderSessions();document.getElementById('startBtn').textContent='Start'}},1000)}
+}
+function reset(){clearInterval(interval);running=false;remaining=total;update();document.getElementById('startBtn').textContent='Start'}
+function setMode(m,label,el){
+  clearInterval(interval);running=false;total=m*60;remaining=total;document.querySelectorAll('.mode').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('label').textContent=label==='Pomodoro'?'Focus Time':label;document.getElementById('startBtn').textContent='Start';update()
+}
+function renderSessions(){
+  document.getElementById('sessions').innerHTML=Array.from({length:4},(_,i)=>`<div class="dot${i<sessions%4||sessions%4===0&&sessions>0?i<(sessions%4||4):false?' done':''}"></div>`).join('');
+  // simpler:
+  document.getElementById('sessions').innerHTML=Array.from({length:4},(_,i)=>`<div class="dot${i<(sessions%4||4)&&sessions>0?' done':''}"></div>`).join('');
+}
+renderSessions();update();
+</script>
+</body>
+</html>
